@@ -1,0 +1,39 @@
+
+google:
+  places:
+    baseUrl: https://maps.googleapis.com/maps/api/place
+    apiKey: <yourKey>
+    language: en
+#      language: zh-TW
+    daysSinceLastReviewQuery: 7
+
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mybatis/mapper/*.xml
+  inject-sql-session-on-mapper-scan: true
+  type-aliases-package: com.github.charlotte3517.hotelbooking.model
+
+spring:
+  datasource:
+# Local testing: Use localhost or 127.0.0.1 as the IP address
+#    url: jdbc:oracle:thin:@127.0.0.1:1521:orcl
+
+# For Docker: Use the container name or the internal Docker IP address
+#    url: jdbc:oracle:thin:@oracle19c:1521:orcl
+#    url: jdbc:oracle:thin:@<ip>:1521:orcl
+
+# For AWS Docker: Use the EC2 instance private IP address
+    url: jdbc:oracle:thin:@<ip>:1521:orcl
+    username: c##ht2404
+    password: ht2404
+    driver-class-name: oracle.jdbc.OracleDriver
+
+
+  googles:
+    places:
+      baseUrl: https://maps.googleapis.com/maps/api/place
+
+
+allowed:
+  origins: "http://localhost,http://localhost:80,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:80,http://127.0.0.1:3000,http://charlotte3517.com"
+

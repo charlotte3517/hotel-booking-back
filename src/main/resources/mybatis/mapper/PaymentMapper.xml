@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.charlotte3517.hotelbooking.dao.PaymentDao">
+
+    <resultMap id="PaymentResult" type="com.github.charlotte3517.hotelbooking.payment.Payment">
+        <id property="paymentId" column="payment_id" jdbcType="INTEGER"/>
+        <result property="orderId" column="order_id" jdbcType="INTEGER"/>
+        <result property="paymentDate" column="payment_date" jdbcType="DATE"/>
+        <result property="paymentAmount" column="payment_amount" jdbcType="DECIMAL"/>
+        <result property="paymentMethod" column="payment_method" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getAllPayments" resultMap="PaymentResult">
+        SELECT * FROM Payment
+    </select>
+
+    <select id="getPaymentById" resultMap="PaymentResult">
+        SELECT *
+          FROM Payment
+         WHERE payment_id = #{paymentId}
+    </select>
+
+    <insert id="insertPayment" parameterType="com.github.charlotte3517.hotelbooking.payment.Payment">
+        <selectKey keyProperty="payment.paymentId" resultType="int" order="BEFORE">
+            SELECT payment_seq.nextval FROM dual
+        </selectKey>
+        INSERT INTO Payment (
+               payment_id, order_id, payment_date,
+               payment_amount, payment_method, created_at,
+               created_user_id)
+        VALUES (#{payment.paymentId}, #{payment.orderId}, #{payment.paymentDate},
+                #{payment.paymentAmount}, #{payment.paymentMethod}, sysdate,
+                #{userId})
+    </insert>
+
+    <update id="updatePayment" parameterType="com.github.charlotte3517.hotelbooking.payment.Payment">
+        UPDATE Payment
+           SET order_id = #{payment.orderId},
+               payment_date = #{payment.paymentDate},
+               payment_amount = #{payment.paymentAmount},
+               payment_method = #{payment.paymentMethod},
+               updated_at = sysdate,
+               updated_user_id = #{userId}
+         WHERE payment_id = #{paymentId}
+    </update>
+
+    <delete id="deletePayment">
+        DELETE FROM Payment WHERE payment_id = #{paymentId}
+    </delete>
+
+    <select id="checkIfOrderIdExists" resultType="java.lang.Integer">
+        SELECT count(*)
+          FROM Payment p
+    INNER JOIN Hotel_Order o ON (p.order_id = o.order_id)
+         WHERE p.order_id = #{orderId}
+    </select>
+</mapper>

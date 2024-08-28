@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.charlotte3517.hotelbooking.dao.RoomTypeDao">
+
+    <resultMap id="RoomTypeResult" type="com.github.charlotte3517.hotelbooking.hotel.model.RoomType">
+        <id property="roomTypeId" column="room_type_id" jdbcType="INTEGER"/>
+        <result property="hotelId" column="hotel_id" jdbcType="INTEGER"/>
+        <result property="roomName" column="room_name" jdbcType="VARCHAR"/>
+        <result property="minPeople" column="min_people" jdbcType="INTEGER"/>
+        <result property="maxPeople" column="max_people" jdbcType="INTEGER"/>
+        <result property="bedTypeId" column="bed_type_id" jdbcType="INTEGER"/>
+        <result property="normalDayPrice" column="normal_day_price" jdbcType="DECIMAL"/>
+        <result property="holidayPrice" column="holiday_price" jdbcType="DECIMAL"/>
+        <result property="roomCapacity" column="room_capacity" jdbcType="INTEGER"/>
+        <result property="privateBath" column="private_bath" jdbcType="BOOLEAN"/>
+        <result property="wifi" column="wifi" jdbcType="BOOLEAN"/>
+        <result property="breakfast" column="breakfast" jdbcType="BOOLEAN"/>
+        <result property="miniBar" column="mini_bar" jdbcType="BOOLEAN"/>
+        <result property="roomService" column="room_service" jdbcType="BOOLEAN"/>
+        <result property="television" column="television" jdbcType="BOOLEAN"/>
+        <result property="airConditioner" column="air_conditioner" jdbcType="BOOLEAN"/>
+        <result property="refrigerator" column="refrigerator" jdbcType="BOOLEAN"/>
+        <result property="smokeFree" column="smoke_free" jdbcType="BOOLEAN"/>
+        <result property="childFriendly" column="child_friendly" jdbcType="BOOLEAN"/>
+        <result property="petFriendly" column="pet_friendly" jdbcType="BOOLEAN"/>
+    </resultMap>
+
+    <select id="getAllRoomTypes" resultMap="RoomTypeResult">
+        SELECT * FROM Room_Type
+    </select>
+
+    <select id="getRoomTypeById" resultMap="RoomTypeResult">
+        SELECT * FROM Room_Type WHERE room_type_id = #{roomTypeId}
+    </select>
+
+    <insert id="insertRoomType" parameterType="com.github.charlotte3517.hotelbooking.hotel.model.RoomType">
+        INSERT INTO Room_Type (room_type_id, hotel_id, room_name, min_people, max_people, bed_type_id,
+        normal_day_price, holiday_price, room_capacity, private_bath, wifi, breakfast,
+        mini_bar, room_service, television, air_conditioner, refrigerator, smoke_free,
+        child_friendly, pet_friendly, created_at, created_user_id)
+        VALUES (room_type_seq.nextval, #{hotelId}, #{roomName}, #{minPeople}, #{maxPeople}, #{bedTypeId},
+        #{normalDayPrice}, #{holidayPrice}, #{roomCapacity}, #{privateBath}, #{wifi}, #{breakfast},
+        #{miniBar}, #{roomService}, #{television}, #{airConditioner}, #{refrigerator}, #{smokeFree},
+        #{childFriendly}, #{petFriendly}, #{createdAt}, #{createUserId})
+    </insert>
+
+    <update id="updateRoomType" parameterType="com.github.charlotte3517.hotelbooking.hotel.model.RoomType">
+        UPDATE Room_Type
+        SET hotel_id = #{hotelId}, room_name = #{roomName}, min_people = #{minPeople}, max_people = #{maxPeople},
+        bed_type_id = #{bedTypeId}, normal_day_price = #{normalDayPrice}, holiday_price = #{holidayPrice},
+        room_capacity = #{roomCapacity}, private_bath = #{privateBath}, wifi = #{wifi}, breakfast = #{breakfast},
+        mini_bar = #{miniBar}, room_service = #{roomService}, television = #{television}, air_conditioner = #{airConditioner},
+        refrigerator = #{refrigerator}, smoke_free = #{smokeFree}, child_friendly = #{childFriendly}, pet_friendly = #{petFriendly},
+        updated_at = #{updatedAt}, updated_user_id = #{updatedUserId}
+        WHERE room_type_id = #{roomTypeId}
+    </update>
+
+    <delete id="deleteRoomType">
+        DELETE FROM Room_Type WHERE room_type_id = #{roomTypeId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.charlotte3517.hotelbooking.dao.GoogleReviewDao">
+
+    <resultMap id="GoogleReviewResult" type="com.github.charlotte3517.hotelbooking.googleplace.GoogleReview">
+        <id property="googleReviewId" column="google_review_id" jdbcType="INTEGER"/>
+        <result property="authorName" column="author_name" jdbcType="VARCHAR"/>
+        <result property="rating" column="rating" jdbcType="DECIMAL"/>
+        <result property="content" column="content" jdbcType="CLOB"/>
+        <result property="reviewTime" column="review_time" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getAllGoogleReviews" resultMap="GoogleReviewResult">
+        SELECT * FROM Google_Review
+    </select>
+
+    <select id="getGoogleReviewById" resultMap="GoogleReviewResult">
+        SELECT * FROM Google_Review WHERE google_review_id = #{id}
+    </select>
+
+    <insert id="insertGoogleReview" parameterType="com.github.charlotte3517.hotelbooking.googleplace.GoogleReview">
+        INSERT INTO Google_Review (
+               google_review_id, google_map_place_id, author_name,
+               rating, content, review_time,
+               created_at)
+        VALUES (google_review_seq.nextval, #{googleReview.placeId}, #{googleReview.authorName},
+                #{googleReview.rating}, #{googleReview.content}, #{googleReview.reviewTime},
+                sysdate)
+    </insert>
+
+    <update id="updateGoogleReview" parameterType="com.github.charlotte3517.hotelbooking.googleplace.GoogleReview">
+        UPDATE Google_Review
+           SET google_map_place_id = #{googleReview.placeId},
+               author_name = #{googleReview.authorName},
+               rating = #{googleReview.rating},
+               content = #{googleReview.reviewText},
+               review_time = #{googleReview.reviewTime}
+        WHERE google_review_id = #{googleReview.id}
+    </update>
+
+    <delete id="deleteGoogleReview">
+        DELETE FROM Google_Review WHERE google_review_id = #{id}
+    </delete>
+
+    <delete id="deleteGoogleReviewBeforeLastNDays">
+        DELETE FROM Google_Review
+        WHERE created_at &lt; TRUNC(SYSDATE) - #{numberOfDays}
+    </delete>
+
+
+    <delete id="deleteGoogleReviewByPlaceIdBeforeLastNDays">
+        DELETE FROM Google_Review
+         WHERE google_map_place_id = #{placeId}
+           AND created_at &lt; TRUNC(SYSDATE) - #{numberOfDays}
+    </delete>
+
+    <select id="getGoogleReviewCountByPlaceIdInLastNDays" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM Google_Review
+        WHERE google_map_place_id = #{placeId}
+          AND created_at >= TRUNC(SYSDATE) - #{numberOfDays}
+    </select>
+
+    <select id="getGoogleReviewByPlaceIdInLastNDays" resultMap="GoogleReviewResult">
+        SELECT *
+          FROM Google_Review
+         WHERE google_map_place_id = #{placeId}
+           AND created_at >= TRUNC(SYSDATE) - #{numberOfDays}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  oracle19c:
+    image: oracle/database:19.3.0-ee
+    container_name: oracle19c
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+    environment:
+      - ORACLE_SID=orcl
+      - ORACLE_PWD=Oracle202401
+      - INIT_SGA_SIZE=3000
+      - INIT_PGA_SIZE=1000
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    networks:
+      - app-net
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -s / as sysdba" ]
+      interval: 60s
+      timeout: 30s
+      retries: 10
+      start_period: 600s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    shm_size: '2g'
+
+
+
+  hotel-booking-backend:
+    image: hotel-booking-backend
+    container_name: hotel-booking-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - oracle19c
+    networks:
+      - app-net
+    volumes:
+      - /c/workspace_2024/docker_data_2024_1/backend/:/data
+
+  hotel-booking-frontend:
+    image: hotel-booking-frontend
+    container_name: hotel-booking-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - hotel-booking-backend
+    networks:
+      - app-net
+
+volumes:
+  oracle-data:
+    external: true
+
+networks:
+  app-net:
+    external:
+      name: nat

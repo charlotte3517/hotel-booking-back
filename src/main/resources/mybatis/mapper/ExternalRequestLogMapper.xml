@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.charlotte3517.hotelbooking.dao.ExternalRequestLogDao">
+
+    <resultMap id="ExternalRequestLogResult" type="com.github.charlotte3517.hotelbooking.log.model.ExternalRequestLog">
+        <id property="requestId" column="request_id" jdbcType="INTEGER"/>
+        <result property="requestMethod" column="request_method" jdbcType="VARCHAR"/>
+        <result property="requestUrl" column="request_url" jdbcType="VARCHAR"/>
+        <result property="requestHeaders" column="request_headers" jdbcType="CLOB"/>
+        <result property="requestBody" column="request_body" jdbcType="CLOB"/>
+        <result property="responseStatus" column="response_status" jdbcType="INTEGER"/>
+        <result property="responseHeaders" column="response_headers" jdbcType="CLOB"/>
+        <result property="responseBody" column="response_body" jdbcType="CLOB"/>
+        <result property="clientIp" column="client_ip" jdbcType="VARCHAR"/>
+        <result property="requestTime" column="request_time" jdbcType="DATE"/>
+        <result property="responseTime" column="response_time" jdbcType="DATE"/>
+        <result property="createdAt" column="created_at" jdbcType="DATE"/>
+    </resultMap>
+
+    <select id="getAllExternalRequestLogs" resultMap="ExternalRequestLogResult">
+        SELECT * FROM External_Request_Log
+    </select>
+
+    <select id="getExternalRequestLogById" resultMap="ExternalRequestLogResult">
+        SELECT * FROM External_Request_Log WHERE request_id = #{requestId}
+    </select>
+
+    <insert id="insertExternalRequestLog" useGeneratedKeys="true" keyProperty="log.requestId">
+        <selectKey keyProperty="log.requestId" resultType="java.lang.Long" order="BEFORE">
+            SELECT external_request_log_seq.nextval FROM dual
+        </selectKey>
+        INSERT INTO External_Request_Log
+        (
+        request_id,
+        <if test="log.requestMethod != null and log.requestMethod != ''">request_method,</if>
+        <if test="log.requestUrl != null and log.requestUrl != ''">request_url,</if>
+        <if test="log.requestHeaders != null and log.requestHeaders != ''">request_headers,</if>
+        <if test="log.requestBody != null and log.requestBody != ''">request_body,</if>
+        <if test="log.responseStatus != null">response_status,</if>
+        <if test="log.responseHeaders != null and log.responseHeaders != ''">response_headers,</if>
+        <if test="log.responseBody != null and log.responseBody != ''">response_body,</if>
+        <if test="log.clientIp != null and log.clientIp != ''">client_ip,</if>
+        <if test="log.requestTime != null">request_time,</if>
+        <if test="log.responseTime != null">response_time,</if>
+        created_at
+        )
+        VALUES
+        (
+        #{log.requestId},
+        <if test="log.requestMethod != null and log.requestMethod != ''">#{log.requestMethod},</if>
+        <if test="log.requestUrl != null and log.requestUrl != ''">#{log.requestUrl},</if>
+        <if test="log.requestHeaders != null and log.requestHeaders != ''">#{log.requestHeaders},</if>
+        <if test="log.requestBody != null and log.requestBody != ''">#{log.requestBody},</if>
+        <if test="log.responseStatus != null">#{log.responseStatus},</if>
+        <if test="log.responseHeaders != null and log.responseHeaders != ''">#{log.responseHeaders},</if>
+        <if test="log.responseBody != null and log.responseBody != ''">#{log.responseBody},</if>
+        <if test="log.clientIp != null and log.clientIp != ''">#{log.clientIp},</if>
+        <if test="log.requestTime != null">#{log.requestTime},</if>
+        <if test="log.responseTime != null">#{log.responseTime},</if>
+        current_timestamp
+        )
+    </insert>
+
+
+
+    <update id="updateExternalRequestLog">
+        UPDATE External_Request_Log
+        <set>
+            <if test="log.requestMethod != null and log.requestMethod != ''">
+                request_method = #{log.requestMethod},
+            </if>
+            <if test="log.requestUrl != null and log.requestUrl != ''">
+                request_url = #{log.requestUrl},
+            </if>
+            <if test="log.requestHeaders != null and log.requestHeaders != ''">
+                request_headers = #{log.requestHeaders},
+            </if>
+            <if test="log.requestBody != null and log.requestBody != ''">
+                request_body = #{log.requestBody},
+            </if>
+            <if test="log.responseStatus != null">
+                response_status = #{log.responseStatus},
+            </if>
+            <if test="log.responseHeaders != null and log.responseHeaders != ''">
+                response_headers = #{log.responseHeaders},
+            </if>
+            <if test="log.responseBody != null and log.responseBody != ''">
+                response_body = #{log.responseBody},
+            </if>
+            <if test="log.clientIp != null and log.clientIp != ''">
+                client_ip = #{log.clientIp},
+            </if>
+            <if test="log.requestTime != null">
+                request_time = #{log.requestTime},
+            </if>
+            <if test="log.responseTime != null">
+                response_time = #{log.responseTime},
+            </if>
+            <if test="log.createdAt != null">
+                created_at = #{log.createdAt},
+            </if>
+        </set>
+        WHERE request_id = #{log.requestId}
+    </update>
+
+
+    <delete id="deleteExternalRequestLog">
+        DELETE FROM External_Request_Log WHERE request_id = #{requestId}
+    </delete>
+
+</mapper>

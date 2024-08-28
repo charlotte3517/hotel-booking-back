@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.github.charlotte3517.hotelbooking.dao.HotelDao">
+
+    <resultMap id="HotelResult" type="com.github.charlotte3517.hotelbooking.hotel.model.Hotel">
+        <id property="hotelId" column="hotel_id" jdbcType="INTEGER"/>
+        <result property="hotelName" column="hotel_name" jdbcType="VARCHAR"/>
+        <result property="address" column="address" jdbcType="VARCHAR"/>
+        <result property="googleMapUrl" column="google_map_url" jdbcType="VARCHAR"/>
+        <result property="placeId" column="google_map_place_id" jdbcType="VARCHAR"/>
+        <result property="rating" column="rating" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <select id="getAllHotels" resultMap="HotelResult">
+        SELECT * FROM Hotel
+    </select>
+
+    <select id="getHotelById" resultMap="HotelResult">
+        SELECT * FROM Hotel WHERE hotel_id = #{hotelId}
+    </select>
+
+    <select id="getHotelByName" resultMap="HotelResult">
+        SELECT * FROM Hotel WHERE hotel_name = #{hotelName}
+    </select>
+
+    <select id="getHotelIdByPlaceId" resultType="java.lang.Integer">
+        SELECT hotel_id FROM hotel WHERE google_map_place_id = #{placeId}
+    </select>
+
+    <select id="getHotelByPlaceId" resultMap="HotelResult">
+        SELECT * FROM Hotel WHERE google_map_place_id = #{placeId}
+    </select>
+
+    <insert id="insertHotel" parameterType="com.github.charlotte3517.hotelbooking.hotel.model.Hotel" useGeneratedKeys="true" keyProperty="hotel.hotelId">
+        <selectKey keyProperty="hotel.hotelId" resultType="int" order="BEFORE">
+            SELECT hotel_seq.nextval FROM dual
+        </selectKey>
+        INSERT INTO Hotel (
+                    hotel_id, hotel_name, address,
+                    google_map_url, google_map_place_id, rating,
+                    created_at, created_user_id)
+             VALUES (#{hotel.hotelId}, #{hotel.hotelName}, #{hotel.address},
+                     #{hotel.googleMapUrl}, #{hotel.placeId}, #{hotel.rating},
+                     sysdate, #{userId})
+    </insert>
+
+
+    <update id="updateHotel" parameterType="com.github.charlotte3517.hotelbooking.hotel.model.Hotel">
+        UPDATE Hotel
+           SET hotel_name = #{hotelName},
+               address = #{address},
+               google_map_url = #{googleMapUrl},
+               google_map_place_id = #{googleMapPlaceId},
+               rating = #{rating},
+               updated_at = #{updatedAt},
+               updated_user_id = #{updatedUserId}
+         WHERE hotel_id = #{hotelId}
+    </update>
+
+    <delete id="deleteHotel">
+        DELETE FROM Hotel WHERE hotel_id = #{hotelId}
+    </delete>
+
+    <select id="getHotelCountByName" resultType="java.lang.Integer">
+        SELECT count(*) FROM Hotel WHERE hotel_name = #{hotelName}
+    </select>
+
+    <select id="getHotelCountByPlaceId" resultType="java.lang.Integer">
+        SELECT count(*) FROM Hotel WHERE google_map_place_id = #{placeId}
+    </select>
+
+</mapper>
