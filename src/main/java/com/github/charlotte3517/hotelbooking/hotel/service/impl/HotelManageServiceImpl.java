@@ -1,23 +1,29 @@
 package com.github.charlotte3517.hotelbooking.hotel.service.impl;
 
-import com.github.charlotte3517.hotelbooking.dao.RoomTypeDao;
 import com.github.charlotte3517.hotelbooking.googleplace.GoogleReview;
-import com.github.charlotte3517.hotelbooking.dao.GoogleReviewDao;
 import com.github.charlotte3517.hotelbooking.dao.HotelDao;
 import com.github.charlotte3517.hotelbooking.hotel.model.Hotel;
-import com.github.charlotte3517.hotelbooking.hotel.model.RoomType;
+import com.github.charlotte3517.hotelbooking.hotel.data.HotelDataService;
+import com.github.charlotte3517.hotelbooking.hotel.model.HotelWithReviews;
 import com.github.charlotte3517.hotelbooking.hotel.service.HotelManageService;
 import com.github.charlotte3517.hotelbooking.googleplace.service.GoogleMapApiService;
 import com.github.charlotte3517.hotelbooking.googleplace.service.googlemap.findplace.PlaceResponse;
 import com.github.charlotte3517.hotelbooking.googleplace.service.googlemap.placedetail.PlaceDetailsResponse;
 import com.github.charlotte3517.hotelbooking.googleplace.service.googlemap.placedetail.Review;
 import com.github.charlotte3517.hotelbooking.exception.HBException;
+import com.github.charlotte3517.hotelbooking.redis.RedisKeyUtil;
+import com.github.charlotte3517.hotelbooking.redis.RedisUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,11 +31,14 @@ import java.util.List;
 public class HotelManageServiceImpl implements HotelManageService {
 
     private static final Logger logger = LoggerFactory.getLogger(HotelManageServiceImpl.class);
-
-    private static final Integer DEFAULT_USER_ID = 0;
+    private static final int HOTEL_DATA_CACHE_DAYS = 31;
+    private static final int HOTEL_REVIEW_CACHE_DAYS = 32;
 
     @Value("${google.places.daysSinceLastReviewQuery}")
     private Integer numberOfDays;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     private GoogleMapApiService googleMapApiService;
@@ -38,11 +47,15 @@ public class HotelManageServiceImpl implements HotelManageService {
     private HotelDao hotelDao;
 
     @Autowired
-    private GoogleReviewDao googleReviewDao;
+    private HotelDataService hotelDataService;
 
     @Autowired
-    private RoomTypeDao roomTypeDao;
+    private RedisUtil redisUtil;
 
+    @Autowired
+    private RedisKeyUtil redisKeyUtil;
+
+    @Override
     public List<Hotel> getAllHotels() {
         try {
             return hotelDao.getAllHotels();
@@ -52,44 +65,49 @@ public class HotelManageServiceImpl implements HotelManageService {
         }
     }
 
-    public Hotel getHotelById(Integer hotelId) {
+    @Override
+    public HotelWithReviews getHotelWithReviews(String hotelName) {
         try {
-            return hotelDao.getHotelById(hotelId);
+            Hotel hotel = getHotelByNameOrAddFromGooglePlace(hotelName);
+            List<GoogleReview> reviews = getReviewsByPlaceIdOrAddFromGooglePlace(hotel.getPlaceId());
+            return new HotelWithReviews(hotel, reviews);
         } catch (Exception e) {
-            logger.error("Error occurred while fetching hotel by ID: {}", hotelId, e);
-            throw new HBException("Failed to fetch hotel by ID");
+            logger.error("Error occurred while fetching hotel and reviews for: {}", hotelName, e);
+            throw new HBException("Failed to fetch hotel and reviews");
         }
     }
 
+    @Override
     public Hotel getHotelByNameOrAddFromGooglePlace(String hotelName) {
-        try {
-            if (isExistHotelName(hotelName)) {
-                return hotelDao.getHotelByName(hotelName);
-            }
+        String redisKey = redisKeyUtil.buildHotelKey(hotelName);
 
-            Hotel hotel = getHotelFromGooglePlace(hotelName);
-            createHotelIfNotExistPlaceId(hotel);
-            addHotelId(hotel);
-            return hotel;
-        } catch (Exception e) {
-            logger.error("Error occurred while fetching or adding hotel by name: {}", hotelName, e);
-            throw new HBException("Failed to fetch or add hotel by name");
+        Hotel cachedHotel = redisUtil.get(redisKey, Hotel.class);
+        if (cachedHotel != null) {
+            logger.info("Hotel retrieved from Redis: {}", hotelName);
+            return cachedHotel;
         }
-    }
 
-    private boolean isExistHotelName(String hotelName) {
-        try {
-            return hotelDao.getHotelCountByName(hotelName) > 0;
-        } catch (Exception e) {
-            logger.error("Error occurred while checking if hotel name exists: {}", hotelName, e);
-            throw new HBException("Failed to check if hotel name exists");
+        Hotel hotel = getHotelFromGooglePlace(hotelName);
+        if (hotel != null) {
+            redisUtil.set(redisKey, hotel, Duration.ofDays(HOTEL_DATA_CACHE_DAYS));
+            logger.info("Hotel stored in Redis: {}", hotelName);
+            hotelDataService.createHotelIfNotExistPlaceId(hotel);
         }
+
+        return hotel;
     }
 
     private Hotel getHotelFromGooglePlace(String hotelName) {
         try {
             PlaceResponse placeResponse = googleMapApiService.findPlaceFromText(hotelName);
-            return generateHotel(placeResponse);
+            Hotel hotel = generateHotel(placeResponse);
+
+            if (!hotelName.equalsIgnoreCase(hotel.getHotelName())) {
+                logger.error("Returned hotel name does not match input: {} != {}", hotelName, hotel.getHotelName());
+                throw new HBException("Failed to get hotel from Google Place");
+            }
+
+            return hotel;
         } catch (Exception e) {
             logger.error("Error occurred while getting hotel from Google Place: {}", hotelName, e);
             throw new HBException("Failed to get hotel from Google Place");
@@ -110,68 +128,20 @@ public class HotelManageServiceImpl implements HotelManageService {
         }
     }
 
-    private void createHotelIfNotExistPlaceId(Hotel hotel) {
-        try {
-            if (!isExistHotelPlaceId(hotel.getPlaceId())) {
-                insertHotelAndSetId(hotel);
-            }
-        } catch (Exception e) {
-            logger.error("Error occurred while creating hotel if not exist by place ID: {}", hotel.getPlaceId(), e);
-            throw new HBException("Failed to create hotel if not exist by place ID");
-        }
-    }
-
-    private void addHotelId(Hotel hotel) {
-        try {
-            Integer hotelId = hotelDao.getHotelIdByPlaceId(hotel.getPlaceId());
-            hotel.setHotelId(hotelId);
-        } catch (Exception e) {
-            logger.error("Error occurred while adding hotel ID: {}", hotel.getPlaceId(), e);
-            throw new HBException("Failed to add hotel ID");
-        }
-    }
-
-    private boolean isExistHotelPlaceId(String placeId) {
-        try {
-            return hotelDao.getHotelCountByPlaceId(placeId) > 0;
-        } catch (Exception e) {
-            logger.error("Error occurred while checking if hotel place ID exists: {}", placeId, e);
-            throw new HBException("Failed to check if hotel place ID exists");
-        }
-    }
-
-    private void insertHotelAndSetId(Hotel hotel) {
-        try {
-            hotelDao.insertHotel(hotel, DEFAULT_USER_ID);
-        } catch (Exception e) {
-            logger.error("Error occurred while inserting hotel and setting ID: {}", hotel.getPlaceId(), e);
-            throw new HBException("Failed to insert hotel and set ID");
-        }
-    }
-
     @Override
     public List<GoogleReview> getReviewsByPlaceIdOrAddFromGooglePlace(String placeId) {
-        try {
-            if (isGoogleReviewExistByHotelIdInLastNDays(placeId, numberOfDays)) {
-                return googleReviewDao.getGoogleReviewByPlaceIdInLastNDays(placeId, numberOfDays);
-            }
+        String redisKey = redisKeyUtil.buildGoogleReviewKey(placeId);
 
-            List<GoogleReview> googleReviews = getGoogleReviewsFromGooglePlace(placeId);
-            createGoogleReview(googleReviews, placeId);
-            return googleReviews;
-        } catch (Exception e) {
-            logger.error("Error occurred while fetching or adding Google reviews by place ID: {}", placeId, e);
-            throw new HBException("Failed to fetch or add Google reviews by place ID");
+        List<GoogleReview> cachedReviews = redisUtil.get(redisKey, List.class);
+        if (cachedReviews != null) {
+            logger.debug("Google reviews retrieved from Redis for place ID: {}", placeId);
+            return cachedReviews;
         }
-    }
 
-    private boolean isGoogleReviewExistByHotelIdInLastNDays(String placeId, Integer numberOfDays) {
-        try {
-            return googleReviewDao.getGoogleReviewCountByPlaceIdInLastNDays(placeId, numberOfDays) > 0;
-        } catch (Exception e) {
-            logger.error("Error occurred while checking if Google reviews exist by place ID in last {} days: {}", numberOfDays, placeId, e);
-            throw new HBException("Failed to check if Google reviews exist by place ID in last " + numberOfDays + " days");
-        }
+        List<GoogleReview> googleReviews = getGoogleReviewsFromGooglePlace(placeId);
+        redisUtil.set(redisKey, googleReviews, Duration.ofDays(HOTEL_REVIEW_CACHE_DAYS));
+        logger.info("Google reviews stored in Redis for place ID: {}", placeId);
+        return googleReviews;
     }
 
     private List<GoogleReview> getGoogleReviewsFromGooglePlace(String placeId) {
@@ -204,28 +174,6 @@ public class HotelManageServiceImpl implements HotelManageService {
         } catch (Exception e) {
             logger.error("Error occurred while generating Google reviews from place details response", e);
             throw new HBException("Failed to generate Google reviews from place details response");
-        }
-    }
-
-    private void createGoogleReview(List<GoogleReview> googleReviews, String placeId) {
-        try {
-            googleReviewDao.deleteGoogleReviewByPlaceIdBeforeLastNDays(placeId, numberOfDays);
-
-            for (GoogleReview googleReview : googleReviews) {
-                googleReviewDao.insertGoogleReview(googleReview);
-            }
-        } catch (Exception e) {
-            logger.error("Error occurred while creating Google reviews: {}", placeId, e);
-            throw new HBException("Failed to create Google reviews");
-        }
-    }
-
-    public List<RoomType> getAllRoomTypes() {
-        try {
-            return roomTypeDao.getAllRoomTypes();
-        } catch (Exception e) {
-            logger.error("Error occurred while fetching all room types", e);
-            throw new HBException("Failed to fetch all room types");
         }
     }
 }

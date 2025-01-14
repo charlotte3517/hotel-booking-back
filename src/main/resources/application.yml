@@ -1,17 +1,12 @@
 
-google:
-  places:
-    baseUrl: https://maps.googleapis.com/maps/api/place
-    apiKey: <yourKey>
-    language: en
-#      language: zh-TW
-    daysSinceLastReviewQuery: 7
-
 mybatis:
   config-location: classpath:mybatis/mybatis-config.xml
   mapper-locations: classpath:mybatis/mapper/*.xml
   inject-sql-session-on-mapper-scan: true
   type-aliases-package: com.github.charlotte3517.hotelbooking.model
+
+allowed:
+  origins: "http://localhost,http://localhost:80,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:80,http://127.0.0.1:3000,http://charlotte3517.com"
 
 spring:
   datasource:
@@ -23,17 +18,43 @@ spring:
 #    url: jdbc:oracle:thin:@<ip>:1521:orcl
 
 # For AWS Docker: Use the EC2 instance private IP address
-    url: jdbc:oracle:thin:@<ip>:1521:orcl
+#    url: jdbc:oracle:thin:@127.0.0.1:1521:orcl
     username: c##ht2404
     password: ht2404
     driver-class-name: oracle.jdbc.OracleDriver
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: hotel-booking-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+kafka:
+  group: hotel-booking-group
+  topic:
+    order:
+      name: hotel-booking.orders
+      partitions: 3
+      replicas: 1
 
+google:
+  places:
+    baseUrl: https://maps.googleapis.com/maps/api/place
+    apiKey: <yourKey>
+    language: en
+    #      language: zh-TW
+    daysSinceLastReviewQuery: 7
 
-  googles:
-    places:
-      baseUrl: https://maps.googleapis.com/maps/api/place
+amadeus:
+  api:
+    baseUrl: https://test.api.amadeus.com/
+    clientId: <yourId>
+    clientSecret: <yourKey>
 
-
-allowed:
-  origins: "http://localhost,http://localhost:80,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:80,http://127.0.0.1:3000,http://charlotte3517.com"
 

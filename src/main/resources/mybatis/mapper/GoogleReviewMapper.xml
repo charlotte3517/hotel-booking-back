@@ -19,16 +19,6 @@
         SELECT * FROM Google_Review WHERE google_review_id = #{id}
     </select>
 
-    <insert id="insertGoogleReview" parameterType="com.github.charlotte3517.hotelbooking.googleplace.GoogleReview">
-        INSERT INTO Google_Review (
-               google_review_id, google_map_place_id, author_name,
-               rating, content, review_time,
-               created_at)
-        VALUES (google_review_seq.nextval, #{googleReview.placeId}, #{googleReview.authorName},
-                #{googleReview.rating}, #{googleReview.content}, #{googleReview.reviewTime},
-                sysdate)
-    </insert>
-
     <update id="updateGoogleReview" parameterType="com.github.charlotte3517.hotelbooking.googleplace.GoogleReview">
         UPDATE Google_Review
            SET google_map_place_id = #{googleReview.placeId},
@@ -47,20 +37,6 @@
         DELETE FROM Google_Review
         WHERE created_at &lt; TRUNC(SYSDATE) - #{numberOfDays}
     </delete>
-
-
-    <delete id="deleteGoogleReviewByPlaceIdBeforeLastNDays">
-        DELETE FROM Google_Review
-         WHERE google_map_place_id = #{placeId}
-           AND created_at &lt; TRUNC(SYSDATE) - #{numberOfDays}
-    </delete>
-
-    <select id="getGoogleReviewCountByPlaceIdInLastNDays" resultType="java.lang.Integer">
-        SELECT count(*)
-        FROM Google_Review
-        WHERE google_map_place_id = #{placeId}
-          AND created_at >= TRUNC(SYSDATE) - #{numberOfDays}
-    </select>
 
     <select id="getGoogleReviewByPlaceIdInLastNDays" resultMap="GoogleReviewResult">
         SELECT *

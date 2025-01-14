@@ -1,7 +1,6 @@
 package com.github.charlotte3517.hotelbooking.controller;
 
-import com.github.charlotte3517.hotelbooking.dao.RoomTypeDao;
-import com.github.charlotte3517.hotelbooking.hotel.model.RoomType;
+import com.github.charlotte3517.hotelbooking.hotel.model.HotelWithReviews;
 import com.github.charlotte3517.hotelbooking.googleplace.GoogleReview;
 import com.github.charlotte3517.hotelbooking.hotel.model.Hotel;
 import com.github.charlotte3517.hotelbooking.hotel.service.HotelManageService;
@@ -17,9 +16,6 @@ public class HotelController {
     @Autowired
     private HotelManageService hotelManageService;
 
-    @Autowired
-    private RoomTypeDao roomTypeDao;
-
     @GetMapping("")
     public String eChoes() {
         return "backend connect success!";
@@ -31,25 +27,8 @@ public class HotelController {
         return hotels;
     }
 
-    @GetMapping("/status")
-    public String getStatus() {
-        return "Hotel Booking Service is running!";
-    }
-
     @GetMapping("/name/{hotelName}")
-    public Hotel getHotelByName(@PathVariable String hotelName) {
-
-        Hotel hotel = hotelManageService.getHotelByNameOrAddFromGooglePlace(hotelName);
-        return hotel;
-    }
-
-    @GetMapping("/reviews/{placeId}")
-    public List<GoogleReview> getReviewsByPlaceId(@PathVariable String placeId) {
-        return hotelManageService.getReviewsByPlaceIdOrAddFromGooglePlace(placeId);
-    }
-
-    @GetMapping("/roomtypes")
-    public List<RoomType> getAllRoomTypes() {
-        return hotelManageService.getAllRoomTypes();
+    public HotelWithReviews getHotelWithReviews(@PathVariable String hotelName) {
+        return hotelManageService.getHotelWithReviews(hotelName);
     }
 }

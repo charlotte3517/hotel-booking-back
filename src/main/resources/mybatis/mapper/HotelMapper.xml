@@ -24,10 +24,6 @@
         SELECT * FROM Hotel WHERE hotel_name = #{hotelName}
     </select>
 
-    <select id="getHotelIdByPlaceId" resultType="java.lang.Integer">
-        SELECT hotel_id FROM hotel WHERE google_map_place_id = #{placeId}
-    </select>
-
     <select id="getHotelByPlaceId" resultMap="HotelResult">
         SELECT * FROM Hotel WHERE google_map_place_id = #{placeId}
     </select>
@@ -44,27 +40,6 @@
                      #{hotel.googleMapUrl}, #{hotel.placeId}, #{hotel.rating},
                      sysdate, #{userId})
     </insert>
-
-
-    <update id="updateHotel" parameterType="com.github.charlotte3517.hotelbooking.hotel.model.Hotel">
-        UPDATE Hotel
-           SET hotel_name = #{hotelName},
-               address = #{address},
-               google_map_url = #{googleMapUrl},
-               google_map_place_id = #{googleMapPlaceId},
-               rating = #{rating},
-               updated_at = #{updatedAt},
-               updated_user_id = #{updatedUserId}
-         WHERE hotel_id = #{hotelId}
-    </update>
-
-    <delete id="deleteHotel">
-        DELETE FROM Hotel WHERE hotel_id = #{hotelId}
-    </delete>
-
-    <select id="getHotelCountByName" resultType="java.lang.Integer">
-        SELECT count(*) FROM Hotel WHERE hotel_name = #{hotelName}
-    </select>
 
     <select id="getHotelCountByPlaceId" resultType="java.lang.Integer">
         SELECT count(*) FROM Hotel WHERE google_map_place_id = #{placeId}
