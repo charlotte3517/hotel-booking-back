@@ -1,21 +1,19 @@
 # Hotel Booking Backend
 
-This is the backend of the Hotel Booking website, 
-built using Spring Boot, MyBatis, and Gradle, hosted on AWS ECS with Fargate. 
+This is the backend of the Hotel Booking website,  
+built using Spring Boot, MyBatis, and Gradle, and hosted on AWS ECS with Fargate.
 
-The backend handles order creation, payment processing, hotel review from google place api, and external API logging.
+The backend is responsible for managing hotel data, bookings, and payments, integrating with Amadeus and Google Places APIs for hotel information and reviews.  
+It also incorporates Redis for caching API data and provides robust logging and automated cleanup features to ensure optimal performance and reliability.
 
 ## Features
 
-- **Order Management**: Automatically creates order details and payment records.
-- **Hotel Review Storage**: Stores hotel review data in the database for 7 days.  
-  The backend checks if the stored data is older than 7 days;  
-  if it is, the data is deleted, and new data is retrieved from the Google Places API.
-
-- **Automated Data Cleanup**: Automatically deletes hotel reviews older than 7 days every Monday at 2 AM,  
-  ensuring that the database contains only the most recent data.
-- **Logging**: All external requests and responses are logged in the External_Request_Log table.
-- **Tests**: Includes unit tests for hotel, order, and payment functionalities.
+- **Amadeus API Integration**: Retrieves hotel data, available offers, and allows hotel bookings using the Amadeus API.
+- **Google Places API Integration**: Fetches Google reviews and address for hotels, providing users with detailed feedback and ratings.
+- **Caching with Redis**: Caches frequently accessed API data (e.g., hotel search results and reviews) to improve performance and reduce API calls.  
+  Cached data in Redis is automatically cleaned up on a monthly schedule to ensure data freshness and optimize storage.
+- **Logging**: Logs all external API requests and responses in the `External_Request_Log` table for monitoring and debugging.
+- **Tests**: Includes unit tests for Amadeus API integration to ensure functionality and reliability.
 
 ## Tech Stack
 
@@ -23,8 +21,17 @@ The backend handles order creation, payment processing, hotel review from google
 - **ORM**: MyBatis
 - **Build Tool**: Gradle
 - **Database**: Oracle 19c hosted on AWS EC2 using Docker
+- **Cache**: Redis hosted on AWS EC2 for caching frequently accessed data and improving response times
 - **Hosting**: Backend hosted on AWS ECS (Fargate), Docker images stored in AWS ECR
-- **API Integration**: Spring Boot backend integrated with Google Places API
+- **API Integration**:
+  - **Google Places API**: Integrated for fetching hotel reviews and location details
+  - **Amadeus API**: Integrated to:
+    - Search hotels by city
+    - Get hotel offers
+    - Book hotels
+    - *To handle incomplete or missing data from the Amadeus API testing environment,  
+      the backend seamlessly switches to mock data, ensuring uninterrupted functionality.*
+
 - **Domain**: Domain registered with AWS Route 53
 
 ## Prerequisites
