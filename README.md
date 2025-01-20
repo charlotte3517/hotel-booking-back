@@ -4,7 +4,7 @@ This is the backend of the Hotel Booking website,
 built using Spring Boot, MyBatis, and Gradle, and hosted on AWS ECS with Fargate.
 
 The backend is responsible for managing hotel data, bookings, and payments, integrating with Amadeus and Google Places APIs for hotel information and reviews.  
-It also incorporates Redis for caching API data and provides robust logging and automated cleanup features to ensure optimal performance and reliability.
+It also incorporates Redis for caching API data and automated cleanup features to ensure optimal performance and reliability.
 
 ## Features
 
