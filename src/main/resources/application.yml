@@ -54,7 +54,7 @@ google:
 amadeus:
   api:
     baseUrl: https://test.api.amadeus.com/
-    clientId: cgnx8WXa8bAoAPJrBGZQPi66DVRfdHzv
-    clientSecret: jHVnDDULcrBBgCwI
+    clientId: <yourClientId>
+    clientSecret: <yourClientSecret>
 
 

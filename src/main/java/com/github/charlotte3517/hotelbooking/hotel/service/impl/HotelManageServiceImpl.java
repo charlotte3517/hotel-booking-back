@@ -22,6 +22,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -116,16 +118,31 @@ public class HotelManageServiceImpl implements HotelManageService {
 
     private Hotel generateHotel(PlaceResponse placeResponse) {
         try {
+            String htmlAttribution = placeResponse.getCandidates().get(0).getPhotos().get(0).getHtml_attributions().get(0);
+            String googleMapUrl = extractUrlFromHtml(htmlAttribution);
+
             return new Hotel()
                     .setHotelName(placeResponse.getCandidates().get(0).getName())
                     .setAddress(placeResponse.getCandidates().get(0).getFormatted_address())
-                    .setGoogleMapUrl(placeResponse.getCandidates().get(0).getPhotos().get(0).getHtml_attributions().get(0))
+                    .setGoogleMapUrl(googleMapUrl)
                     .setPlaceId(placeResponse.getCandidates().get(0).getPlace_id())
                     .setRating(placeResponse.getCandidates().get(0).getRating());
         } catch (Exception e) {
             logger.error("Error occurred while generating hotel from place response", e);
             throw new HBException("Failed to generate hotel from place response");
         }
+    }
+
+    private String extractUrlFromHtml(String htmlAttribution) {
+        String regex = "href=\\\"(.*?)\\\"";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(htmlAttribution);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+
+        throw new IllegalArgumentException("Invalid htmlAttribution format: " + htmlAttribution);
     }
 
     @Override
